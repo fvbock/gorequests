@@ -52,8 +52,8 @@ err = r.UnmarshalJson(&someType)
 var done bool
 
 data := map[string]string{
-	"token": CROCODOC_API_TOKEN,
-	"uuid":  c.Uuid,
+	"token": TOKEN,
+	"uuid":  id,
 }
 
 r, err := gorequests.Post("http://example.com/endpoint", data, nil, -1)
