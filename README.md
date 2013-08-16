@@ -15,7 +15,7 @@ url := "https://duckduckgo.com"
 r, err := gorequests.Get(url, nil, -1)
 
 data, err := gorequests.NewQueryData(
-  map[string]string{
+	map[string]string{
 		"q": "golang http get request querystring",
 	})
 

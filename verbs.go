@@ -9,7 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"os"
+	// "os"
 	"time"
 )
 
@@ -40,7 +40,8 @@ func Get(request_url string, data map[string][]string, timeout time.Duration) (r
 	return
 }
 
-func Post(url string, data map[string]string, files map[string]*os.File, timeout time.Duration) (r Response, err error) {
+// func Post(url string, data map[string]string, files map[string]*os.File, timeout time.Duration) (r Response, err error) {
+func Post(url string, data map[string]string, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r Response, err error) {
 	body_buf := bytes.NewBufferString("")
 	body_writer := multipart.NewWriter(body_buf)
 
@@ -52,14 +53,16 @@ func Post(url string, data map[string]string, files map[string]*os.File, timeout
 		}
 	}
 
-	for key, fh := range files {
-		file_writer, err := body_writer.CreateFormFile(key, fh.Name())
-		if err != nil {
-			err = errors.New(fmt.Sprintf("Error writing file to buffer: %v", err))
-			return r, err
+	for key, filesForKey := range files {
+		for filename, fs := range filesForKey {
+			file_writer, err := body_writer.CreateFormFile(key, filename)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("Error writing file to buffer: %v", err))
+				return r, err
+			}
+			io.Copy(file_writer, fs)
+			err = fs.Close()
 		}
-		io.Copy(file_writer, fh)
-		fh.Close()
 	}
 
 	content_type := body_writer.FormDataContentType()
@@ -76,3 +79,21 @@ func Post(url string, data map[string]string, files map[string]*os.File, timeout
 	r.Request = &Request{HttpRequest: r.HttpResponse.Request}
 	return
 }
+
+// POST form
+// func postExample() {
+//         values := make(url.Values)
+//         values.Set("email", "anything@stathat.com")
+//         values.Set("stat", "messages sent - female to male")
+//         values.Set("count", "1")
+//         r, err := http.PostForm("http://api.stathat.com/ez", values)
+//         if err != nil {
+//             log.Printf("error posting stat to stathat: %s", err)
+//             return
+//         }
+//         body, _ := ioutil.ReadAll(r.Body)
+//         r.Body.Close()
+//         log.Printf("stathat post result body: %s", body)
+// }
+
+// ParseMultipartForm ...
