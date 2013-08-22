@@ -8,13 +8,8 @@ import (
 )
 
 var (
-	// requestbinURL = "http://requestb.in/151i6401"
-	requestbinURL = "https://k2xgquot4wuv.runscope.net"
+	requestbinURL = "http://requestb.in/151i6401"
 )
-
-type CrocFile struct {
-	UUID string `json:uuid`
-}
 
 func TestGet(t *testing.T) {
 	url := requestbinURL
