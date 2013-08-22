@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	// "log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // TYPE: http.Response
@@ -33,6 +35,7 @@ type Response struct {
 	Request             *Request
 	Body                []byte
 	BufferReadAndClosed bool // Body could be len() 0...
+	Error               error
 }
 
 func (r *Response) File(filename string) (fd *os.File, err error) {
@@ -117,5 +120,34 @@ func (r *Response) ReadHttpResponse() (err error) {
 		err = errors.New(fmt.Sprintf("Error reading response body: %v", err))
 	}
 	r.BufferReadAndClosed = true
+	return
+}
+
+func Retry(r *Response, retryCount int, retryTimeout int, retryOnHttpStatus []int) (rr *Response) {
+	if retryCount == 0 {
+		rr = r
+		return
+	}
+
+	if retryOnHttpStatus == nil {
+		if r.Status == 200 {
+			rr = r
+			return
+		}
+	} else {
+		for _, s := range retryOnHttpStatus {
+			if r.Status == s {
+				// log.Println("Status", s, "retry in", retryTimeout, "seconds")
+				if retryTimeout > 0 {
+					time.Sleep(time.Duration(retryTimeout) * time.Second)
+				}
+				rr = Retry(do(r.Request.Method(), r.Request.URL(), r.Request.ContentType, r.Request.Body), retryCount-1, retryTimeout, retryOnHttpStatus)
+				return
+			}
+		}
+		// none of the statuses for which we want to retry - pass the response on as is
+		rr = r
+	}
+
 	return
 }

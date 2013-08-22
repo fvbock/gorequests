@@ -1,6 +1,7 @@
 package gorequests
 
 import (
+	"bytes"
 	"net/http"
 )
 
@@ -27,6 +28,16 @@ import (
 
 type Request struct {
 	HttpRequest *http.Request
+	Body        *bytes.Buffer
+	ContentType string
+}
+
+func (r *Request) Method() string {
+	return r.HttpRequest.Method
+}
+
+func (r *Request) URL() string {
+	return r.HttpRequest.URL.String()
 }
 
 func (r *Request) Params() map[string][]string {
