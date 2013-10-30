@@ -13,7 +13,7 @@ var (
 
 func TestGet(t *testing.T) {
 	url := requestbinURL
-	r := gorequests.Get(url, nil, -1)
+	r := gorequests.Get(url, nil, nil, -1)
 	if r.Error != nil {
 		t.Fail()
 		t.Log(r.Error)
@@ -37,7 +37,7 @@ func TestGet(t *testing.T) {
 	// 		"t": []string{"canonical", "foobar"},
 	// 	})
 
-	r = gorequests.Get(url, data, -1)
+	r = gorequests.Get(url, nil, data, -1)
 	t.Log(r.Status)
 	t.Log(r.Request.URL())
 	t.Log(r.Request.Params())
@@ -70,7 +70,7 @@ func TestPost(t *testing.T) {
 		"file": map[string]io.ReadCloser{"file": fh},
 	}
 
-	r := gorequests.Post(url, data, files, -1)
+	r := gorequests.Post(url, nil, data, files, -1)
 	if r.Error != nil {
 		t.Fail()
 		t.Log(r.Error)
@@ -109,7 +109,7 @@ func TestRetry(t *testing.T) {
 		"file": map[string]io.ReadCloser{"file": fh},
 	}
 
-	r := gorequests.Retry(gorequests.Post(url, data, files, -1), 3, 5, []int{200})
+	r := gorequests.Retry(gorequests.Post(url, nil, data, files, -1), 3, 5, []int{200})
 	if r.Error != nil {
 		t.Fail()
 		t.Log(r.Error)
@@ -136,7 +136,7 @@ func TestPut(t *testing.T) {
 		"file": map[string]io.ReadCloser{"file": fh},
 	}
 
-	r := gorequests.Put(url, data, files, -1)
+	r := gorequests.Put(url, nil, data, files, -1)
 	if r.Error != nil {
 		t.Fail()
 		t.Log(r.Error)
@@ -163,7 +163,7 @@ func TestDelete(t *testing.T) {
 		t.Log(err)
 	}
 
-	r := gorequests.Delete(url, data, -1)
+	r := gorequests.Delete(url, nil, data, -1)
 	if r.Error != nil {
 		t.Fail()
 		t.Log(r.Error)

@@ -86,7 +86,7 @@ func (r *Response) Text() (body string, err error) {
 func (r *Response) UnmarshalJson(v interface{}) (err error) {
 	// TODO: 1. make Text() instead and only use the reader when called
 	// TODO: 2. use Text() or the
-	if strings.ToLower(r.HttpResponse.Header.Get("Content-Type")) != "application/json" {
+	if strings.ToLower(r.HttpResponse.Header.Get("Content-Type"))[:16] != "application/json" {
 		err = errors.New(fmt.Sprintf("Response body is not JSON: %v", r.HttpResponse.Header.Get("Content-Type")))
 		return
 	}
@@ -141,7 +141,7 @@ func Retry(r *Response, retryCount int, retryTimeout int, retryOnHttpStatus []in
 				if retryTimeout > 0 {
 					time.Sleep(time.Duration(retryTimeout) * time.Second)
 				}
-				rr = Retry(do(r.Request.Method(), r.Request.URL(), r.Request.ContentType, r.Request.Body), retryCount-1, retryTimeout, retryOnHttpStatus)
+				rr = Retry(do(r.Request.Method(), r.Request.URL(), r.Headers(), r.Request.Body), retryCount-1, retryTimeout, retryOnHttpStatus)
 				return
 			}
 		}

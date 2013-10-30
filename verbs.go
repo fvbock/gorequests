@@ -6,40 +6,66 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	// "os"
-	"log"
 	"time"
 )
 
-// func Options(requestURL string, timeout time.Duration) (r *Response) {
-// 	r = do("OPTIONS", requestURL, "", nil)
+// func Options(requestURL string, headers, timeout time.Duration) (r *Response) {
+// 	r = do("OPTIONS", requestURL, headers, "", nil)
 // 	return
 // }
 
-func Get(requestURL string, data map[string][]string, timeout time.Duration) (r *Response) {
+func Get(requestURL string, headers http.Header, data map[string][]string, timeout time.Duration) (r *Response) {
 	requestURL = prepareQuery(requestURL, data)
-	r = do("GET", requestURL, "", nil)
+	r = do("GET", requestURL, headers, nil)
 	return
 }
 
-func Delete(requestURL string, data map[string][]string, timeout time.Duration) (r *Response) {
+func Delete(requestURL string, headers http.Header, data map[string][]string, timeout time.Duration) (r *Response) {
 	requestURL = prepareQuery(requestURL, data)
-	r = do("DELETE", requestURL, "", nil)
+	r = do("DELETE", requestURL, headers, nil)
 	return
 }
 
-func Post(url string, data map[string]string, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
-	contentType, bodyBuf := prepareBody(data, files)
-	r = do("POST", url, contentType, bodyBuf)
+func Post(requestURL string, headers http.Header, data interface{}, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
+	return PostOrPut("POST", requestURL, headers, data, files, timeout)
+}
+
+func PostForm(requestURL string, headers http.Header, data map[string]string, timeout time.Duration) (r *Response) {
+	if headers == nil {
+		headers = http.Header{}
+	}
+	values := make(url.Values)
+	for key, val := range data {
+		values.Set(key, val)
+	}
+	headers.Add("Content-Type", "application/x-www-form-urlencoded")
+	r = do("POST", requestURL, headers, bytes.NewBuffer([]byte(values.Encode())))
 	return
 }
 
-func Put(url string, data map[string]string, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
-	contentType, bodyBuf := prepareBody(data, files)
-	r = do("PUT", url, contentType, bodyBuf)
+func Put(requestURL string, headers http.Header, data interface{}, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
+	return PostOrPut("PUT", requestURL, headers, data, files, timeout)
+}
+
+func PostOrPut(verb string, requestURL string, headers http.Header, data interface{}, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
+	if headers == nil {
+		headers = http.Header{}
+	}
+	var bodyBuf *bytes.Buffer
+	var contentType string
+	switch data.(type) {
+	case map[string]string:
+		contentType, bodyBuf = prepareBody(data.(map[string]string), files)
+		headers.Add("Content-Type", contentType)
+	case string:
+		bodyBuf = bytes.NewBuffer([]byte(data.(string)))
+	}
+
+	r = do(verb, requestURL, headers, bodyBuf)
 	return
 }
 
@@ -97,25 +123,30 @@ func prepareBody(data map[string]string, files map[string]map[string]io.ReadClos
 // var encodeUrlMethods = set.NewStringSet([]string{"DELETE", "GET", "HEAD", "OPTIONS"}...)
 // var encodeBodyMethods = set.NewStringSet([]string{"PATCH", "POST", "PUT", "TRACE"}...)
 
-func do(method string, url string, bodyType string, bodyBuffer *bytes.Buffer) (r *Response) {
+func do(method string, requestUrl string, headers http.Header, bodyBuffer *bytes.Buffer) (r *Response) {
 	var client = &http.Client{nil, nil, &CookieJar{}}
 	var bufCopy string
 	var req *http.Request
 	var err error
+
 	if bodyBuffer != nil {
 		// this is clunky. i need the stuff to retry a request.
 		// do should eventually know that i might want to directly
 		// retry the request in case of failures and _only_ then
 		// keep this stuff
 		bufCopy = bodyBuffer.String()
-		req, err = http.NewRequest(method, url, bodyBuffer)
+		req, err = http.NewRequest(method, requestUrl, bodyBuffer)
 	} else {
-		req, err = http.NewRequest(method, url, nil)
+		req, err = http.NewRequest(method, requestUrl, nil)
 	}
 
-	if len(bodyType) > 0 {
-		req.Header.Set("Content-Type", bodyType)
+	for k, vals := range headers {
+		for _, v := range vals {
+			req.Header.Add(k, v)
+		}
 	}
+
+	// user agent
 	req.Header.Set("User-Agent", GR_USER_AGENT)
 	resp, err := client.Do(req)
 	if err != nil {
@@ -128,13 +159,13 @@ func do(method string, url string, bodyType string, bodyBuffer *bytes.Buffer) (r
 		Status:       resp.StatusCode,
 		Request: &Request{
 			HttpRequest: resp.Request,
-			ContentType: bodyType,
+			ContentType: headers.Get("Content-Type"),
 		},
 		Error: err,
 	}
 
 	// same as above:
-	// do should eventually know that i might want to directly
+	// should eventually know that i might want to directly
 	// retry the request in case of failures and _only_ then
 	// keep this stuff
 	if bodyBuffer != nil {
@@ -142,17 +173,3 @@ func do(method string, url string, bodyType string, bodyBuffer *bytes.Buffer) (r
 	}
 	return
 }
-
-// POST TODO: form
-// func postExample() {
-//         values := make(url.Values)
-//         values.Set("foo", "bar")
-//         r, err := http.PostForm("http://foo.bar.com/ep", values)
-//         if err != nil {
-//             log.Printf("post error: %s", err)
-//             return
-//         }
-//         body, _ := ioutil.ReadAll(r.Body)
-//         r.Body.Close()
-//         log.Printf("post repsponse body: %s", body)
-// }
