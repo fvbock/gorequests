@@ -123,7 +123,7 @@ func (r *Response) UnmarshalXML(v interface{}) (err error) {
 	if err != nil {
 		return
 	}
-	err = xml.Unmarshal(body, &v)
+	err = xml.Unmarshal(body, v)
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Could not unmarshal response XML: %v", err))
 	}
