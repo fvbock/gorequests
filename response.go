@@ -2,6 +2,7 @@ package gorequests
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -75,29 +76,56 @@ func (r *Response) Buffer() io.ReadCloser {
 }
 
 func (r *Response) Text() (body string, err error) {
+	if r.Body != nil {
+		body = string(r.Body)
+		return
+	}
+	var b []byte
+	b, err = r.Bytes()
+	if err != nil {
+		return
+	}
+	body = string(b)
+	return
+}
+
+func (r *Response) Bytes() (body []byte, err error) {
+	if r.Body != nil {
+		body = r.Body
+		return
+	}
 	err = r.ReadHttpResponse()
 	if err != nil {
 		err = errors.New(fmt.Sprintf("could not read response body: %v", err))
 	}
-	body = string(r.Body)
+	body = r.Body
 	return
 }
 
 func (r *Response) UnmarshalJson(v interface{}) (err error) {
-	// TODO: 1. make Text() instead and only use the reader when called
-	// TODO: 2. use Text() or the
 	if strings.ToLower(r.HttpResponse.Header.Get("Content-Type"))[:16] != "application/json" {
 		err = errors.New(fmt.Sprintf("Response body is not JSON: %v", r.HttpResponse.Header.Get("Content-Type")))
 		return
 	}
-	err = r.ReadHttpResponse()
+	body, err := r.Bytes()
 	if err != nil {
-		err = errors.New(fmt.Sprintf("json decoding error/could not read response body: %v", err))
 		return
 	}
-	err = json.Unmarshal(r.Body, &v)
+	err = json.Unmarshal(body, &v)
 	if err != nil {
 		err = errors.New(fmt.Sprintf("json decoding error: %v", err))
+	}
+	return
+}
+
+func (r *Response) UnmarshalXML(v interface{}) (err error) {
+	body, err := r.Bytes()
+	if err != nil {
+		return
+	}
+	err = xml.Unmarshal(body, &v)
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Could not unmarshal response XML: %v", err))
 	}
 	return
 }
