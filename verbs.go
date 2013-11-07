@@ -150,8 +150,11 @@ func do(method string, requestUrl string, headers http.Header, bodyBuffer *bytes
 	req.Header.Set("User-Agent", GR_USER_AGENT)
 	resp, err := client.Do(req)
 	if err != nil {
-		err = errors.New(fmt.Sprintf("Error sending request: %v", err))
-		log.Println("err != nil", err)
+		log.Println(err)
+		r = &Response{
+			Error: errors.New(fmt.Sprintf("Error sending request: %v", err)),
+		}
+		return
 	}
 
 	r = &Response{
