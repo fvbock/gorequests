@@ -124,7 +124,7 @@ func prepareBody(data map[string]string, files map[string]map[string]io.ReadClos
 // var encodeBodyMethods = set.NewStringSet([]string{"PATCH", "POST", "PUT", "TRACE"}...)
 
 func do(method string, requestUrl string, headers http.Header, bodyBuffer *bytes.Buffer) (r *Response) {
-	var client = &http.Client{nil, nil, &CookieJar{}}
+	var client = &http.Client{Jar: &CookieJar{}}
 	var bufCopy string
 	var req *http.Request
 	var err error
