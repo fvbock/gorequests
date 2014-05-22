@@ -103,8 +103,8 @@ func (r *Response) Bytes() (body []byte, err error) {
 }
 
 func (r *Response) UnmarshalJson(v interface{}) (err error) {
-	if strings.ToLower(r.HttpResponse.Header.Get("Content-Type"))[:16] != "application/json" {
-		err = errors.New(fmt.Sprintf("Response body is not JSON: %v", r.HttpResponse.Header.Get("Content-Type")))
+	if len(r.HttpResponse.Header.Get("Content-Type")) < 16 || strings.ToLower(r.HttpResponse.Header.Get("Content-Type"))[:16] != "application/json" {
+		err = errors.New(fmt.Sprintf("Response Content-Type is not JSON: %v", r.HttpResponse.Header.Get("Content-Type")))
 		return
 	}
 	body, err := r.Bytes()
