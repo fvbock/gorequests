@@ -2,6 +2,7 @@ package gorequests
 
 import (
 	"bytes"
+	"strings"
 	// "crypto/tls"
 	"errors"
 	"fmt"
@@ -58,11 +59,13 @@ func PostOrPut(verb string, requestURL string, headers http.Header, data interfa
 	var bodyBuf *bytes.Buffer
 	var contentType string
 	switch data.(type) {
+	case []byte:
+		bodyBuf = bytes.NewBuffer(data.([]byte))
+	case string:
+		bodyBuf = bytes.NewBuffer([]byte(data.(string)))
 	case map[string]string:
 		contentType, bodyBuf = prepareBody(data.(map[string]string), files)
 		headers.Add("Content-Type", contentType)
-	case string:
-		bodyBuf = bytes.NewBuffer([]byte(data.(string)))
 	}
 
 	r = do(verb, requestURL, headers, bodyBuf)
@@ -125,6 +128,9 @@ func prepareBody(data map[string]string, files map[string]map[string]io.ReadClos
 
 func do(method string, requestUrl string, headers http.Header, bodyBuffer *bytes.Buffer) (r *Response) {
 	var client = &http.Client{Jar: &CookieJar{}}
+	if len(requestUrl) > 5 && strings.ToLower(requestUrl[:5]) == "https" {
+		client.Transport = HttpsTransport
+	}
 	var bufCopy string
 	var req *http.Request
 	var err error
