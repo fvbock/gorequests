@@ -19,22 +19,34 @@ import (
 // 	return
 // }
 
+/*
+Get
+*/
 func Get(requestURL string, headers http.Header, data map[string][]string, timeout time.Duration) (r *Response) {
 	requestURL = prepareQuery(requestURL, data)
 	r = do("GET", requestURL, headers, nil)
 	return
 }
 
+/*
+Delete
+*/
 func Delete(requestURL string, headers http.Header, data map[string][]string, timeout time.Duration) (r *Response) {
 	requestURL = prepareQuery(requestURL, data)
 	r = do("DELETE", requestURL, headers, nil)
 	return
 }
 
+/*
+Post
+*/
 func Post(requestURL string, headers http.Header, data interface{}, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
-	return PostOrPut("POST", requestURL, headers, data, files, timeout)
+	return postOrPut("POST", requestURL, headers, data, files, timeout)
 }
 
+/*
+Post Form
+*/
 func PostForm(requestURL string, headers http.Header, data map[string]string, timeout time.Duration) (r *Response) {
 	if headers == nil {
 		headers = http.Header{}
@@ -48,11 +60,14 @@ func PostForm(requestURL string, headers http.Header, data map[string]string, ti
 	return
 }
 
+/*
+Put
+*/
 func Put(requestURL string, headers http.Header, data interface{}, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
-	return PostOrPut("PUT", requestURL, headers, data, files, timeout)
+	return postOrPut("PUT", requestURL, headers, data, files, timeout)
 }
 
-func PostOrPut(verb string, requestURL string, headers http.Header, data interface{}, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
+func postOrPut(verb string, requestURL string, headers http.Header, data interface{}, files map[string]map[string]io.ReadCloser, timeout time.Duration) (r *Response) {
 	if headers == nil {
 		headers = http.Header{}
 	}

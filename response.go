@@ -139,7 +139,7 @@ func (r *Response) Header(name string) string {
 }
 
 func (r *Response) ReadHttpResponse() (err error) {
-	if r.BufferReadAndClosed {
+	if r.BufferReadAndClosed || r.HttpResponse == nil {
 		return
 	}
 	r.Body, err = ioutil.ReadAll(r.HttpResponse.Body)
