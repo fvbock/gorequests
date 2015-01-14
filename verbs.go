@@ -146,7 +146,7 @@ func do(method string, requestUrl string, headers http.Header, bodyBuffer *bytes
 	if len(requestUrl) > 5 && strings.ToLower(requestUrl[:5]) == "https" {
 		client.Transport = HttpsTransport
 	}
-	var bufCopy string
+	var bufCopy []byte
 	var req *http.Request
 	var err error
 
@@ -155,7 +155,7 @@ func do(method string, requestUrl string, headers http.Header, bodyBuffer *bytes
 		// do should eventually know that i might want to directly
 		// retry the request in case of failures and _only_ then
 		// keep this stuff
-		bufCopy = bodyBuffer.String()
+		bufCopy = bodyBuffer.Bytes()
 		req, err = http.NewRequest(method, requestUrl, bodyBuffer)
 	} else {
 		req, err = http.NewRequest(method, requestUrl, nil)
@@ -193,7 +193,7 @@ func do(method string, requestUrl string, headers http.Header, bodyBuffer *bytes
 	// retry the request in case of failures and _only_ then
 	// keep this stuff
 	if bodyBuffer != nil {
-		r.Request.Body = bytes.NewBufferString(bufCopy)
+		r.Request.Body = bytes.NewBuffer(bufCopy)
 	}
 	return
 }

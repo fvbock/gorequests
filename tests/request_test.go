@@ -1,14 +1,15 @@
 package gorequests
 
 import (
-	"github.com/fvbock/gorequests"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/fvbock/gorequests"
 )
 
 var (
-	requestbinURL = "http://requestb.in/151i6401"
+	requestbinURL = "http://requestb.in/106jnln1"
 )
 
 func TestGet(t *testing.T) {
@@ -45,6 +46,20 @@ func TestGet(t *testing.T) {
 	t.Log(r.Request.Param("foo"))
 	t.Log(r.Error)
 }
+
+// // TODO
+// func TestGetNoNetwork(t *testing.T) {
+// 	url := requestbinURL
+// 	r := gorequests.Get(url, nil, nil, -1)
+// 	if r.Error != nil {
+// 		t.Fail()
+// 		t.Log(r.Error)
+// 	}
+// 	t.Log(r.Status)
+// 	t.Log(r.Request.URL())
+// 	t.Log(r.Request.Params())
+// 	t.Log(r.Error)
+// }
 
 func TestPost(t *testing.T) {
 	url := requestbinURL
@@ -95,7 +110,7 @@ func TestPost(t *testing.T) {
 func TestRetry(t *testing.T) {
 	url := requestbinURL
 	data := map[string]string{
-		"token":      "foobar",
+		"token":      "retryfoobar",
 		"other_data": "1234567890",
 	}
 
@@ -109,7 +124,7 @@ func TestRetry(t *testing.T) {
 		"file": map[string]io.ReadCloser{"file": fh},
 	}
 
-	r := gorequests.Retry(gorequests.Post(url, nil, data, files, -1), 3, 5, []int{200})
+	r := gorequests.Retry(gorequests.Post(url, nil, data, files, -1), 3, 2, []int{200})
 	if r.Error != nil {
 		t.Fail()
 		t.Log(r.Error)
